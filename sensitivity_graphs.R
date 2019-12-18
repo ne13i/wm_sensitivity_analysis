@@ -204,7 +204,6 @@ eth_pp_sf$offset <- as.numeric(as.character(eth_pp_sf$offset))
 ### sort by slider frame (different sensitivity applications) ###
 eth_pp_sf <- eth_pp_sf[order(eth_pp_sf$offset),]
 #eth_pp_sf <- eth_pp_sf[with(eth_pp_sf, order(eth_pp_sf$offset)),]
-eth_pp_sf$offset <- as.character(eth_pp_sf$offset)
 row.names(eth_pp_sf) <- NULL
 
 ### giving axis name and adjusting grid size 
