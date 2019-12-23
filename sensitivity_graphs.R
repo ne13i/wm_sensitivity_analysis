@@ -1,5 +1,29 @@
 ##### Sensitivity analysis Graphs with Slider #####
 #### Nebi Yesilekin #####
+### Before starting folder structure should be like this ### 
+###D:\\Workdata\\Ethiopia\\ETH_MZ_fen_tot\\ETH_MZ_belg_fen_tot                
+###¦--ETH_MZ_belg_fen_tot_0                          
+###¦   ¦--Maize_irrig_belg_S_season_fen_tot_0        
+###¦   ¦--Maize_rf_0N_belg_S_season_fen_tot_0        
+###¦   ¦--Maize_rf_highN_belg_S_season_fen_tot_0     
+###¦   °--Maize_rf_lowN_belg_S_season_fen_tot_0      
+###¦--ETH_MZ_belg_fen_tot_100                        
+###¦   ¦--Maize_irrig_belg_S_season_fen_tot_100      
+###¦   ¦--Maize_rf_0N_belg_S_season_fen_tot_100      
+###¦   ¦--Maize_rf_highN_belg_S_season_fen_tot_100   
+###¦   °--Maize_rf_lowN_belg_S_season_fen_tot_100    
+###¦--ETH_MZ_belg_fen_tot_25                         
+###¦   ¦--Maize_irrig_belg_S_season_fen_tot_25       
+###¦   ¦--Maize_rf_0N_belg_S_season_fen_tot_25       
+###¦   ¦--Maize_rf_highN_belg_S_season_fen_tot_25    
+###¦   °--Maize_rf_lowN_belg_S_season_fen_tot_25     
+###°--ETH_MZ_belg_fen_tot_50                         
+###    ¦--Maize_irrig_belg_S_season_fen_tot_50       
+###    ¦--Maize_rf_0N_belg_S_season_fen_tot_50       
+###    ¦--Maize_rf_highN_belg_S_season_fen_tot_50    
+###    °--Maize_rf_lowN_belg_S_season_fen_tot_50     
+
+
 rm(list=ls())
 #rm(list=setdiff(ls(), c("Workdir", "Outdir"))) #remove everthing except workdir and outdir
 readClipboard()
@@ -15,9 +39,9 @@ library(rnaturalearth)
 library(gtools)
 
 
-Workdir <-  "D:\\Work\\RawOutputs"
+Workdir <-  "D:\\Workdata\\RawOutputs"
 setwd(Workdir)
-Outdir <- "D:\\Work\\Analysis"
+Outdir <- "D:\\Workdata\\Analysis"
 
 ####getting aggregated average for each sell
 parent <- basename(Workdir)
@@ -63,14 +87,39 @@ for (k in 1:number3) {
   filename <- dir(cd)
   filename
   csvpath <- paste0(cd,'\\', filename)
+  print(csvpath)
   content <- read.csv(csvpath, header = T, sep = ',', row.names = NULL)
-  colnames(content) <- c(colnames(content)[-1],NULL)
-  ###excluding rows with 2018
-  #rowsof2018 <- grep("2018", gsub(".{3}$", "", content[,17]))
-  #content <- content[-rowsof2018,]
-  #years <- content[2:35, 15]
+  if(grepl("row.names", colnames(content)[1])==TRUE){
+    colnames(content) <-c(colnames(content)[-1], NULL)
+  }else{
+    
+  }
+  #colnames(content) <- c(colnames(content)[-1],NULL)
+  ###remove last column if NA
+  #content <- content[1:(ncol(content)-1)]
+  ###excluding rows with unwanted years for analysis ####
+  if(!length(grep("2019", gsub(".{3}$", "", content[,"SDAT"])))==0){
+    rowsof2019 <- grep("2019", gsub(".{3}$", "", content[,"SDAT"]))
+    content <- content[-rowsof2019,]
+  }else{
+      
+  }
   
-  ### for meher season
+  if(!length(grep("2018", gsub(".{3}$", "", content[,"SDAT"])))==0){
+    rowsof2018 <- grep("2018", gsub(".{3}$", "", content[,"SDAT"]))
+    content <- content[-rowsof2018,]
+  }else{
+    
+  }
+  ### removing rows that over next year for HDAT ###
+  if(!length(grep("2018", gsub(".{3}$", "", content[,"HDAT"])))==0){
+    rowsof2018 <- grep("2018", gsub(".{3}$", "", content[,"HDAT"]))
+    content <- content[-rowsof2018,]
+  }else{
+    
+  }
+  
+  ### for meher season hdat 
  ## for ( c in 1:nrow(content)){
  ## if(gsub("^.{4}", "", content[c,22])<135){
  ## content[c,22] <- content[c,22]+365
@@ -79,29 +128,31 @@ for (k in 1:number3) {
  ##     next}
  ## }
    
-  #years <- gsub(".{3}$", "", content[1:35, 17])  ##with 2018
-  years <- gsub(".{3}$", "", content[1:34, 17]) ###without 2018
-  #years <- content[2:35, 15]
-  #years <- gsub(".{3}$", "", content[2:36, 17])
-  n <- 34
-  averagecell <- data.frame(content[seq(1,nrow(content),n),1],  ###Latitude
-                            content[seq(1,nrow(content),n),2],  ### Longitude
-                            content[seq(1,nrow(content),n),3],   ##Harvest Area each cell 
-                            #aggregate(as.numeric(content[,3]),list(rep(1:(nrow(content)%/%n+1),each=n,len=nrow(content))),sum)[-1],  ##Harvested_area
-                            content[seq(1,nrow(content),n), 17],  ###SDAT 
-                            #round(aggregate(as.numeric(gsub("^.{4}", "", content[,18])),list(rep(1:(nrow(content)%/%n+1),each=n,len=nrow(content))),mean)[-1], digits = 0), #### PDAT 
-                            as.integer(unlist(aggregate(as.numeric(gsub("^.{4}", "", content[,18])),list(rep(1:(nrow(content)%/%n+1),each=n,len=nrow(content))),mean)[-1])), #### PDAT 
-                            as.integer(unlist(aggregate(as.numeric(gsub("^.{4}", "", content[,22])),list(rep(1:(nrow(content)%/%n+1),each=n,len=nrow(content))),mean)[-1])), #### HDAT 
-                            aggregate(as.numeric(content[,25]),list(rep(1:(nrow(content)%/%n+1),each=n,len=nrow(content))),mean)[-1],   ##### Average_yield
-                            aggregate(as.numeric(content[,81]),list(rep(1:(nrow(content)%/%n+1),each=n,len=nrow(content))),mean)[-1],    ### TMAXA 
-                            aggregate(as.numeric(content[,82]),list(rep(1:(nrow(content)%/%n+1),each=n,len=nrow(content))),mean)[-1],    ###TMINA
-                            aggregate(as.numeric(content[,86]),list(rep(1:(nrow(content)%/%n+1),each=n,len=nrow(content))),mean)[-1]      ####PRCP
-  )
+ 
+  averagecell <- data.frame(aggregate(as.numeric(content[,"LATITUDE"]),by= list(content$LATITUDE, content$LONGITUDE),mean)[-c(1,2)],  ###Latitude
+                            aggregate(as.numeric(content[,"LONGITUDE"]),by= list(content$LATITUDE, content$LONGITUDE),mean)[-c(1,2)],  ### Longitude
+                            aggregate(as.numeric(content[,"HARVEST_AREA"]),by= list(content$LATITUDE, content$LONGITUDE),mean)[-c(1,2)],   ##Harvest Area each cell 
+                
+                            aggregate(as.numeric(gsub("^.{4}", "", content[,"SDAT"])),by= list(content$LATITUDE, content$LONGITUDE),mean)[-c(1,2)],  ###SDAT 
+                             
+                            aggregate(as.numeric(gsub("^.{4}", "", content[,"PDAT"])),by= list(content$LATITUDE, content$LONGITUDE), mean)[-c(1,2)], #### PDAT 
+                            aggregate(as.numeric(gsub("^.{4}", "", content[,"HDAT"])),by= list(content$LATITUDE, content$LONGITUDE), mean)[-c(1,2)], #### HDAT 
+                            aggregate(as.numeric(content[,"HWAM"]),by= list(content$LATITUDE, content$LONGITUDE),mean)[-c(1,2)],   ##### HWAM, Average_yield
+                            aggregate(as.numeric(content[,"TMAXA"]),by= list(content$LATITUDE, content$LONGITUDE),mean)[-c(1,2)],    ### TMAXA 
+                            aggregate(as.numeric(content[,"TMINA"]),by= list(content$LATITUDE, content$LONGITUDE),mean)[-c(1,2)],    ###TMINA
+                            aggregate(as.numeric(content[,"PRCP"]),by= list(content$LATITUDE, content$LONGITUDE),mean)[-c(1,2)],      ####PRCP
+                            aggregate(as.numeric(gsub("^.{4}", "", content[,"MDAT"])),by= list(content$LATITUDE, content$LONGITUDE), mean)[-c(1,2)],   ### MDAT
+                            aggregate(as.numeric(content[,"CWAM"]),by= list(content$LATITUDE, content$LONGITUDE),mean)[-c(1,2)],  ###CWAM
+                            aggregate(as.numeric(content[,"HWAH"]),by= list(content$LATITUDE, content$LONGITUDE),mean)[-c(1,2)], ### HWAH 
+                            aggregate(as.numeric(content[,"GNAM"]),by= list(content$LATITUDE, content$LONGITUDE),mean)[-c(1,2)], ###GNAM 
+                            aggregate(as.numeric(content[,"CNAM"]),by= list(content$LATITUDE, content$LONGITUDE),mean)[-c(1,2)] ###CNAM
+  
+                            )
   
   
   
-  
-  names(averagecell) <- c("LATITUDE", "LONGITUDE", "HARVEST_AREA", "SDAT", "PDAT", "HDAT", "HWAM", "TMAXA", "TMINA", "PRCP")
+  names(averagecell) <- c("LATITUDE", "LONGITUDE", "HARVEST_AREA", "SDAT", "PDAT", 
+                          "HDAT", "HWAM", "TMAXA", "TMINA", "PRCP", "MDAT", "CWAM", "HWAH", "GNAM", "CNAM")
  ###for meher season 
  #for (p in 1:nrow(averagecell)){
  #  if(averagecell[p,6]>365){
@@ -119,17 +170,27 @@ for (k in 1:number3) {
 # Create values for harvested area
 
 
-deneme2 <- data.frame(result$LATITUDE, result$LONGITUDE, result$HARVEST_AREA, result$PDAT*result$HARVEST_AREA, result$HDAT*result$HARVEST_AREA, result$HWAM*result$HARVEST_AREA, result$TMAXA*result$HARVEST_AREA, result$TMINA*result$HARVEST_AREA, result$PRCP*result$HARVEST_AREA)
+deneme2 <- data.frame(result$LATITUDE, result$LONGITUDE, result$HARVEST_AREA, result$PDAT*result$HARVEST_AREA, 
+                      result$HDAT*result$HARVEST_AREA, result$HWAM*result$HARVEST_AREA, result$TMAXA*result$HARVEST_AREA,
+                      result$TMINA*result$HARVEST_AREA, result$PRCP*result$HARVEST_AREA, result$MDAT*result$HARVEST_AREA,
+                      result$CWAM*result$HARVEST_AREA, result$HWAH*result$HARVEST_AREA, result$GNAM*result$HARVEST_AREA,
+                      result$CNAM*result$HARVEST_AREA)
 deneme4 <- data.frame(aggregate(list(deneme2$result.HARVEST_AREA, 
                                      deneme2$result.PDAT...result.HARVEST_AREA,
                                      deneme2$result.HDAT...result.HARVEST_AREA,
                                      deneme2$result.HWAM...result.HARVEST_AREA,
                                      deneme2$result.TMAXA...result.HARVEST_AREA,
                                      deneme2$result.TMINA...result.HARVEST_AREA,
-                                     deneme2$result.PRCP...result.HARVEST_AREA), 
+                                     deneme2$result.PRCP...result.HARVEST_AREA,
+                                     deneme2$result.MDAT...result.HARVEST_AREA,
+                                     deneme2$result.CWAM...result.HARVEST_AREA,
+                                     deneme2$result.HWAH...result.HARVEST_AREA,
+                                     deneme2$result.GNAM...result.HARVEST_AREA,
+                                     deneme2$result.CNAM...result.HARVEST_AREA), 
                                 by=list(deneme2$result.LATITUDE, deneme2$result.LONGITUDE), 
                                 FUN=sum))
-colnames(deneme4) <- c("LATITUDE", "LONGITUDE", "HARVEST_AREA", "PDAT", "HDAT", "HWAM", "TMAXA", "TMINA", "PRCP")
+colnames(deneme4) <- c("LATITUDE", "LONGITUDE", "HARVEST_AREA",
+                       "PDAT", "HDAT", "HWAM", "TMAXA", "TMINA", "PRCP", "MDAT", "CWAM", "HWAH", "GNAM", "CNAM")
 
 ###Getting weighted average #####
 deneme3 <- data.frame(deneme4$LATITUDE, deneme4$LONGITUDE, deneme4$HARVEST_AREA,
@@ -138,18 +199,27 @@ deneme3 <- data.frame(deneme4$LATITUDE, deneme4$LONGITUDE, deneme4$HARVEST_AREA,
                       deneme4$HWAM/deneme4$HARVEST_AREA,
                       deneme4$TMAXA/deneme4$HARVEST_AREA,
                       deneme4$TMINA/deneme4$HARVEST_AREA,
-                      deneme4$PRCP/deneme4$HARVEST_AREA)
-colnames(deneme3) <- c("LATITUDE", "LONGITUDE", "HARVEST_AREA", "PDAT", "HDAT", "HWAM", "TMAXA", "TMINA", "PRCP")
+                      deneme4$PRCP/deneme4$HARVEST_AREA,
+                      deneme4$MDAT/deneme4$HARVEST_AREA,
+                      deneme4$CWAM/deneme4$HARVEST_AREA,
+                      deneme4$HWAH/deneme4$HARVEST_AREA,
+                      deneme4$GNAM/deneme4$HARVEST_AREA,
+                      deneme4$CNAM/deneme4$HARVEST_AREA)
+colnames(deneme3) <- c("LATITUDE", "LONGITUDE", "HARVEST_AREA", "PDAT",
+                       "HDAT", "HWAM", "TMAXA", "TMINA", "PRCP","MDAT", "CWAM", "HWAH", "GNAM", "CNAM")
 ### converting integer for decimal date average ###
 deneme3$PDAT <- as.integer(deneme3$PDAT)
 deneme3$HDAT <- as.integer(deneme3$HDAT)
+deneme3$MDAT <- as.integer(deneme3$MDAT)
 
+deneme3["VWAM"] <- deneme3$CWAM-deneme3$HWAM   ### 
+deneme3["VNAM"] <- deneme3$CNAM-deneme3$GNAM
 
 resultssens <- rbind(resultssens, deneme3)
 
 ###Giving parent folder name to csv files #####
-resultsfiles2 <- paste0(Outdir, "\\", main, "belg_cells.csv")
-#write.csv(deneme3, resultsfiles2)
+resultsfiles2 <- paste0(Outdir, "\\", main, ".csv")
+write.csv(deneme3, resultsfiles2)
 
 
 }
@@ -187,24 +257,21 @@ getoffset["erain_offset"] <- gsub(paste0(parent,"_"), "", getoffset$parentfolder
 getoffset$erain_offset <- sub("(.{1})(.*)", "\\1.\\2", getoffset$erain_offset)
 offset3 <- rep(getoffset$erain_offset, each=nrow(deneme3))
 
-k <- cbind(offset, k)
-#k <- cbind(label_level, k)
-#k$label_level <-NULL
-#k$HWAM <- factor(k$HWAM, levels=1:length(label_level), labels  = as.character(label_level))
-
-###parentfolder different cultivar """
-#getoffset$parentfolder <- gsub("ET_MZ_eGHR_", "", getoffset$parentfolder)
-#offset4 <- rep(getoffset$parentfolder, each=nrow(deneme3))
 
 
 
-#eth_pp_sf$offset3 <- NULL
-eth_pp_sf <- cbind(offset, eth_pp_sf)
-eth_pp_sf$offset <- as.numeric(as.character(eth_pp_sf$offset))
+### choose offset for different senstivitiy analysis 
+### offset: Fertilizer, offset2: Planting window, offset3: Rain multiplier  
+eth_pp_sf <- cbind(offset2, eth_pp_sf)
+eth_pp_sf$offset2 <- as.numeric(as.character(eth_pp_sf$offset2))
+### for fertilizer offset order on slider ### ## uncomment below 
+### fertilizer block 
+
+
 ### sort by slider frame (different sensitivity applications) ###
-eth_pp_sf <- eth_pp_sf[order(eth_pp_sf$offset),]
+#eth_pp_sf <- eth_pp_sf[order(eth_pp_sf$offset),]
 #eth_pp_sf <- eth_pp_sf[with(eth_pp_sf, order(eth_pp_sf$offset)),]
-row.names(eth_pp_sf) <- NULL
+#row.names(eth_pp_sf) <- NULL
 
 ### giving axis name and adjusting grid size 
 
@@ -224,16 +291,25 @@ m <- list(
 )
 ########################
 ##### ggplot and geom_sf 
-frame1 <- eth_pp_sf$offset
-colorhwam <- eth_pp_sf$HWAM
-colorpdat <- eth_pp_sf$PDAT
-colorhdat <- eth_pp_sf$HDAT
-colorprcp <- eth_pp_sf$PRCP
+### change offset column for different applications 
+frame1 <- eth_pp_sf$offset2
+colorhwam <- eth_pp_sf$HWAM   ###HWAM yield
+colorpdat <- eth_pp_sf$PDAT   ###PDAT planting date
+colorhdat <- eth_pp_sf$HDAT   ###HDAT harvesting date
+colorprcp <- eth_pp_sf$PRCP   ###PRCP total precipitation from planting to harvest(mm)
 resultvariables <- data.frame(colorhwam, colorpdat, colorhdat, colorprcp)
+
+
+### graph title based on the variables #####
 titlevariables <- c("Yield(kg/ha)", "Planting Day(DOY)", "Harvesting Day(DOY)", "Total Precipitation(mm)")
+### Different sensitivity analysis applications ####
 sensvariabletitle <- c("Fertilizer Offset Applications", "Rain Multiplier Applications", "Planting Window Applications")
-prefix <- unlist(strsplit(parent, "_", fixed = TRUE))[4:5]
-prefix <- paste0(prefix[1], "_", prefix[2],": ")
+### Slider value prefix##
+prefix <- unlist(strsplit(parent, "_", fixed = TRUE))[4]
+#prefix <- paste0(prefix[1], "_", prefix[2],": ")
+
+### Choose which varilables that you want to plot and change in "color = resultvariables[[1]]"
+### 1: colorhwam, 2: colorpdat, 3: colorhdat, 4: colorprcp 
 p <- ggplot()+
   geom_sf(data = eth, size=0.25, alpha=0.5, fill=NA) +
   geom_sf(data = eth_pp_sf, aes(frame = frame1, color = resultvariables[[1]]), shape=15, size=0.8333333) +
@@ -245,12 +321,12 @@ p <- ggplot()+
   )
 p  
 
-
+#### choose title variables and sensvariables based on previous selection ### 
 
 d <- ggplotly(p) %>%
   animation_opts(frame=4000, transition = 500)%>%
   layout(title = paste0("Ethiopia", " ",mainfoldername, " ", titlevariables[[1]],
-                        " in ", parentname, " Season with ", sensvariabletitle[[1]]),
+                        " in ", parentname, " Season with ", sensvariabletitle[[3]]),
          xaxis = list(title = 'LONGITUDE',
                       zeroline = TRUE,
                       range = c(30, 52)),
@@ -258,7 +334,7 @@ d <- ggplotly(p) %>%
                       range = c(2,16))
          )%>%
   animation_slider(active=0,
-    currentvalue = list(prefix=prefix, font = list(color="red"))
+    currentvalue = list(prefix=paste0(prefix,": "), font = list(color="red"))
     )
 d
 
@@ -276,14 +352,9 @@ d
 ### give custom name to 
 #htmlwidgets::saveWidget(d, paste0(Outdir, "\\", parent, ".html"))
 
-### if it's all namagement remove mainfoldername ###
-htmlwidgets::saveWidget(d, paste0(Outdir,"\\", parent,"_" ,colnames(eth_pp_sf)[2], ".html")) ###for PDAT
-
-
-
-
-
-
+### choose column name in eth_pp_sf that you plotted  ###
+#### colnames(eth_pp_sf)[5]   for HWAM yield 
+htmlwidgets::saveWidget(d, paste0(Outdir,"\\", parent,"_" ,colnames(eth_pp_sf)[5], ".html")) ###
 
 
 
