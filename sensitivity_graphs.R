@@ -118,6 +118,13 @@ for (k in 1:number3) {
   }else{
     
   }
+  ### removing rows that has -99 values in HWAM ###
+  if(!length(grep("-99", content[,"HWAM"]))==0){
+    rowsof99 <- grep("-99", content[,"HWAM"])
+    content <- content[-rowsof99,]
+  }else{
+    
+  }
   
   ### for meher season hdat 
  ## for ( c in 1:nrow(content)){
